@@ -77,24 +77,37 @@ if ! command -v brew &> /dev/null; then
     else
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         
-        # Add Homebrew to PATH
+        # Add Homebrew to PATH permanently
         if [[ "$OS" == "macos" ]] && [[ $(uname -m) == "arm64" ]]; then
             # Apple Silicon Mac
             if ! grep -q 'eval "$(/opt/homebrew/bin/brew shellenv)"' ~/.zprofile 2>/dev/null; then
                 echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
             fi
-            eval "$(/opt/homebrew/bin/brew shellenv)"
         elif [[ "$OS" == "linux" ]]; then
             # Linux
             if ! grep -q 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' ~/.profile 2>/dev/null; then
                 echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> ~/.profile
             fi
-            eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+            # Also add to ~/.bashrc for interactive non-login shells
+            if ! grep -q 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' ~/.bashrc 2>/dev/null; then
+                echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> ~/.bashrc
+            fi
         fi
         print_status "Homebrew installed"
     fi
 else
     print_status "Homebrew already installed"
+fi
+
+# Ensure Homebrew is in PATH for this script session
+if [ "$DRY_RUN" = false ]; then
+    if [[ "$OS" == "macos" ]] && [[ $(uname -m) == "arm64" ]] && [[ -f /opt/homebrew/bin/brew ]]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    elif [[ "$OS" == "macos" ]] && [[ -f /usr/local/bin/brew ]]; then
+        eval "$(/usr/local/bin/brew shellenv)"
+    elif [[ "$OS" == "linux" ]] && [[ -f /home/linuxbrew/.linuxbrew/bin/brew ]]; then
+        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+    fi
 fi
 
 # Update Homebrew
@@ -111,24 +124,26 @@ echo -e "\n${BLUE}Installing applications...${NC}\n"
 
 # Install Ghostty
 print_info "Installing Ghostty..."
-if [[ "$OS" == "macos" ]]; then
-    if brew list --cask ghostty &> /dev/null; then
-        print_warning "Ghostty already installed, skipping"
+if command -v ghostty &> /dev/null; then
+    print_warning "Ghostty already installed, skipping"
+elif [[ "$OS" == "macos" ]]; then
+    if [ "$DRY_RUN" = true ]; then
+        print_dry_run "brew install --cask ghostty"
     else
-        if [ "$DRY_RUN" = true ]; then
-            print_dry_run "brew install --cask ghostty"
-        else
-            brew install --cask ghostty
-            print_status "Ghostty installed"
-        fi
+        brew install --cask ghostty
+        print_status "Ghostty installed"
     fi
 else
-    # Linux - Ghostty needs to be installed differently
-    if command -v ghostty &> /dev/null; then
-        print_warning "Ghostty already installed, skipping"
+    # Linux - try brew install (non-cask), fall back to manual instructions
+    if [ "$DRY_RUN" = true ]; then
+        print_dry_run "brew install ghostty"
     else
-        print_warning "Ghostty on Linux: Please install manually from https://ghostty.org/docs/install/binary"
-        print_warning "  Or build from source: https://github.com/ghostty-org/ghostty"
+        if brew install ghostty 2>/dev/null; then
+            print_status "Ghostty installed"
+        else
+            print_warning "Ghostty not available via Homebrew on this system"
+            print_info "Install manually: https://ghostty.org/docs/install/binary"
+        fi
     fi
 fi
 
@@ -349,11 +364,7 @@ echo -e "${GREEN}  Installation Complete! ✓      ${NC}"
 echo -e "${GREEN}================================${NC}\n"
 
 echo -e "${BLUE}Installed applications:${NC}"
-if [[ "$OS" == "macos" ]]; then
-    echo -e "  • Ghostty  (Terminal emulator)"
-else
-    echo -e "  • Ghostty  (Terminal emulator) - manual install required"
-fi
+echo -e "  • Ghostty  (Terminal emulator)"
 echo -e "  • Nushell  (Modern shell)"
 echo -e "  • Starship (Shell prompt)"
 echo -e "  • Micro    (Text editor)"
@@ -371,20 +382,17 @@ echo -e "  • ~/.config/micro/settings.json\n"
 
 echo -e "${YELLOW}Next steps:${NC}"
 STEP=1
-if [[ "$OS" == "linux" ]]; then
-    echo -e "  $STEP. Install Ghostty manually: https://ghostty.org/docs/install/binary"
-    ((STEP++))
-else
-    echo -e "  $STEP. Launch Ghostty to use your terminal emulator"
-    ((STEP++))
-fi
+echo -e "  $STEP. Start a new terminal session (to load Homebrew PATH)"
+((STEP++))
 if [ "$SHELL_CHANGED" = false ]; then
     echo -e "  $STEP. To switch your default shell to Nushell, run:"
     echo -e "     ${GREEN}chsh -s \$(command -v nu)${NC}"
     ((STEP++))
 fi
-echo -e "  $STEP. Restart your terminal or run:"
-echo -e "     ${GREEN}exec nu${NC}"
+echo -e "  $STEP. Launch Nushell:"
+echo -e "     ${GREEN}nu${NC}"
+((STEP++))
+echo -e "  $STEP. Launch Ghostty to use your terminal emulator"
 ((STEP++))
 echo -e "  $STEP. Micro is configured as your default text editor with simple colorscheme"
 echo -e "\n${BLUE}Note:${NC} Your configurations are symlinked, so any changes you make"
