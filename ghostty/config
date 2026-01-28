@@ -1,0 +1,50 @@
+font-family = JetBrainsMono Nerd Font Propo
+font-size = 13
+
+# Shader symlinked via install.sh
+custom-shader = ~/.config/ghostty/cursor_sweep.glsl
+
+theme = Catppuccin Mocha
+
+background = #1e1e1e
+foreground = #ffffff
+
+cursor-color = #ffffff
+cursor-text = #1e1e1e
+
+selection-background = #414453
+selection-foreground = #ffffff
+
+background-opacity = 0.90
+background-blur = 15
+
+cursor-style = block
+
+window-padding-x = 16
+window-padding-y = 16
+
+font-feature = -liga
+font-thicken = true
+adjust-cell-height = 20%
+
+# Keep just one titlebar style (you had two)
+macos-titlebar-style = hidden
+macos-titlebar-proxy-icon = hidden
+
+# --- Make Ghostty remember splits + centred position ---
+# Includes window position, tabs, splits, etc.
+window-save-state = always
+
+# --- Split panes (no tmux) ---
+# Create splits
+keybind = cmd+d=new_split:right
+keybind = cmd+shift+d=new_split:down
+
+# Move focus between splits
+keybind = cmd+left_bracket=goto_split:previous
+keybind = cmd+right_bracket=goto_split:next
+
+# Optional: equalise split sizes
+keybind = cmd+ctrl+equal=equalize_splits
+
+#command = ~/.config/launch_ghostty.sh
