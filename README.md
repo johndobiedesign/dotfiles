@@ -5,7 +5,7 @@ Dotfiles for macOS and Linux.
 ## Install
 
 ```bash
-git clone https://github.com/johndobie/dotfiles.git ~/.dotfiles && ~/.dotfiles/install.sh
+git clone https://github.com/johndobiedesign/dotfiles.git ~/.dotfiles && ~/.dotfiles/install.sh
 ```
 
 ## What's included
