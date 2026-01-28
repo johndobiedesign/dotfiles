@@ -1,6 +1,6 @@
 # Dotfiles
 
-My personal dotfiles for macOS and Linux.
+Dotfiles for macOS and Linux.
 
 ## Install
 
